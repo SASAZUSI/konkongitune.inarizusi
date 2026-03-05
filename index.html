@@ -3,363 +3,277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONSTER GET GACHA - モンスターゲットガチャ</title>
+    <title>NEO-GENESIS: Card Generator</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
 
         :root {
-            --red-top: #ff0000;
-            --white-bottom: #f0f0f0;
-            --black-line: #222222;
-            --bg-color: #2c3e50;
-            --card-fire: #e74c3c;
-            --card-water: #3498db;
-            --card-grass: #2ecc71;
-            --card-electric: #f1c40f;
-            --card-normal: #bdc3c7;
+            --bg-dark: #0a0e14;
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff00ea;
+            --card-base: #1c252d;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: #ecf0f1;
+            background-color: var(--bg-dark);
+            color: #fff;
             font-family: 'Noto Sans JP', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin: 0;
             padding: 20px;
             min-height: 100vh;
-            overflow-x: hidden;
-            box-sizing: border-box;
         }
 
         h1 {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 1.8rem;
-            text-shadow: 4px 4px 0px #1a252f;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px var(--neon-blue);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--neon-blue);
             margin-bottom: 30px;
-            text-align: center;
         }
 
-        /* モンスターボール */
-        .monster-ball-container {
-            width: 150px;
-            height: 150px;
+        /* 生成装置の演出 */
+        .generator-box {
             position: relative;
-            cursor: pointer;
-            margin-bottom: 30px;
-            perspective: 1000px;
-        }
-
-        .monster-ball {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 8px solid var(--black-line);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            position: relative;
-            transition: transform 0.3s ease-out;
-            background: linear-gradient(to bottom, var(--red-top) 50%, var(--white-bottom) 50%);
-        }
-
-        .monster-ball.shake { animation: ballShake 0.5s ease-in-out; }
-        .monster-ball.open { 
-            animation: ballOpen 0.8s forwards;
-            background: var(--bg-color); /* 開くとき背景と同化 */
-        }
-
-        @keyframes ballShake {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(-5px, -5px) rotate(-5deg); }
-            75% { transform: translate(5px, 5px) rotate(5deg); }
-        }
-
-        @keyframes ballOpen {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            50% { transform: translateY(-50px) scale(1.2); opacity: 0; } /* ボールが飛び去る */
-            100% { transform: translateY(-100px) scale(0); opacity: 0; }
-        }
-
-        .ball-button {
-            width: 40px;
-            height: 40px;
-            background-color: var(--white-bottom);
-            border: 5px solid var(--black-line);
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
-        }
-
-        /* 出てくるカード */
-        .card-display {
             width: 200px;
-            height: 280px;
-            background-color: #f8f8f8;
+            height: 200px;
+            border: 3px solid var(--neon-blue);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+            margin-bottom: 40px;
+        }
+
+        .generator-box:hover {
+            box-shadow: 0 0 40px var(--neon-blue);
+            transform: scale(1.05);
+        }
+
+        .generator-box::before {
+            content: "GENERATE";
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            color: var(--neon-blue);
+        }
+
+        .scanning {
+            animation: scan 1.5s infinite linear;
+        }
+
+        @keyframes scan {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; border-color: var(--neon-pink); }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+
+        /* カードデザイン */
+        #card-container {
+            perspective: 1000px;
+            height: 350px;
+            display: none;
+        }
+
+        .card {
+            width: 240px;
+            height: 340px;
+            background: var(--card-base);
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0); /* 最初は隠す */
-            display: none; /* JSでflexにする */
+            border: 2px solid #444;
+            padding: 15px;
+            position: relative;
+            display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-around;
-            padding: 10px;
-            border: 4px solid #aaa;
-            box-sizing: border-box;
-            font-family: 'Press Start 2P', cursive;
-            animation: cardPopUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            animation-delay: 0.5s; /* ボールが開いた後に表示 */
-            z-index: 5; /* ボールより手前に */
-        }
-        
-        @keyframes cardPopUp {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            animation: flipIn 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
         }
 
-        .card-title { font-size: 0.9rem; color: var(--black-line); text-align: center; margin-bottom: 5px; }
-        .card-image {
-            width: 100px; height: 100px; background-color: #eee;
-            border: 2px solid var(--black-line); border-radius: 5px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 3rem; margin-bottom: 10px;
-        }
-        .card-stats {
-            display: flex; justify-content: space-around; width: 100%;
-            font-size: 0.7rem; color: var(--black-line); margin-top: 5px;
-        }
-        .card-type {
-            padding: 3px 8px; border-radius: 10px;
-            color: white; font-size: 0.6rem; margin-top: 5px;
+        @keyframes flipIn {
+            0% { transform: rotateY(90deg) scale(0.5); opacity: 0; }
+            100% { transform: rotateY(0deg) scale(1); opacity: 1; }
         }
 
-        /* タイプ別カラー */
-        .type-fire { background-color: var(--card-fire); }
-        .type-water { background-color: var(--card-water); }
-        .type-grass { background-color: var(--card-grass); }
-        .type-electric { background-color: var(--card-electric); color: #333; }
-        .type-normal { background-color: var(--card-normal); color: #333; }
-        .type-legendary { 
-            background: linear-gradient(45deg, #ff00ea, #00fffb);
-            box-shadow: 0 0 15px #ff00ea, 0 0 15px #00fffb;
+        .rarity-badge {
+            position: absolute;
+            top: 10px; right: 10px;
+            font-family: 'Orbitron', sans-serif;
             font-weight: bold;
-        }
-        
-        .card-display.type-legendary {
-            border-color: #ff00ea;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 40px #ff00ea;
-        }
-
-
-        /* 引いたカードの履歴 */
-        #collection-list {
-            margin-top: 40px;
-            width: 90%;
-            max-width: 400px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-            padding: 15px;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        .collection-item {
-            display: flex;
-            align-items: center;
-            padding: 8px;
-            border-bottom: 1px dashed rgba(255,255,255,0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
             font-size: 0.8rem;
-            color: #ccc;
         }
 
-        .collection-item:last-child { border-bottom: none; }
-        .collection-item .icon { font-size: 1.5rem; margin-right: 10px; }
-        .collection-item .name { font-weight: bold; }
-        .collection-item .type { margin-left: auto; }
-        .collection-item .hp { margin-left: 15px; }
+        .card-img-area {
+            width: 100%;
+            height: 160px;
+            background: #000;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 5rem;
+            margin: 10px 0;
+            border: 1px solid #333;
+        }
 
-        .message-area {
-            color: #eee;
-            margin-top: 20px;
-            font-size: 1rem;
-            min-height: 20px;
+        .card-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 5px 0;
+            color: #fff;
+        }
+
+        .card-stats {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255,255,255,0.05);
+            padding: 10px 0;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        /* レアリティ効果 */
+        .rank-EX { border: 3px solid var(--neon-pink); box-shadow: 0 0 30px var(--neon-pink); }
+        .rank-EX .rarity-badge { background: var(--neon-pink); color: #fff; }
+        
+        /* 履歴 */
+        .history {
+            margin-top: 50px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .mini-card {
+            background: #1c252d;
+            border-radius: 5px;
+            padding: 5px;
+            text-align: center;
+            font-size: 0.7rem;
+            border: 1px solid #333;
         }
 
         button {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
             margin-top: 20px;
-            font-family: 'Noto Sans JP', sans-serif;
-            font-weight: bold;
-            transition: background-color 0.2s;
+            background: none;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
         }
-        button:hover { background-color: #c0392b; }
-        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
-
     </style>
 </head>
 <body>
 
-    <h1>MONSTER GET GACHA</h1>
+    <h1>NEO-GENESIS</h1>
+    <div class="subtitle">CELLULAR SPECIMEN COLLECTOR</div>
 
-    <div class="monster-ball-container" id="ball-container">
-        <div class="monster-ball" id="monster-ball">
-            <div class="ball-button"></div>
+    <div class="generator-box" id="gen-box" onclick="generateCard()"></div>
+
+    <div id="card-container">
         </div>
-        <div class="card-display" id="card-display">
-            <div class="card-title" id="card-name">? ? ?</div>
-            <div class="card-image" id="card-icon">❓</div>
-            <div class="card-stats">
-                <span id="card-hp">HP ???</span>
-                <span id="card-atk">ATK ???</span>
-            </div>
-            <div class="card-type" id="card-type">TYPE</div>
+
+    <div class="history">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <span style="font-family:'Orbitron'">LOG: SPECIMENS</span>
+            <button onclick="clearLogs()">CLEAR</button>
         </div>
-    </div>
-
-    <div class="message-area" id="message-area">タップでモンスターボールを開け！</div>
-
-    <button id="reset-button" onclick="resetGame()">履歴をリセット</button>
-
-    <h2>ゲットしたモンスター</h2>
-    <div id="collection-list">
-        <p style="text-align: center; color: #888; font-size: 0.9rem;">まだ誰もゲットしていない...</p>
+        <div class="history-grid" id="history-grid"></div>
     </div>
 
     <script>
-        const monsterPool = [
-            { name: "ピカチュウ風", icon: "⚡", type: "electric", hp: 60, atk: 50, rarity: "SR" },
-            { name: "ヒトカゲ風", icon: "🔥", type: "fire", hp: 50, atk: 55, rarity: "R" },
-            { name: "ゼニガメ風", icon: "💧", type: "water", hp: 55, atk: 50, rarity: "R" },
-            { name: "フシギダネ風", icon: "🌿", type: "grass", hp: 65, atk: 45, rarity: "R" },
-            { name: "リザードン風", icon: "🐉", type: "fire", hp: 120, atk: 100, rarity: "SSR" },
-            { name: "カメックス風", icon: "🐢", type: "water", hp: 130, atk: 90, rarity: "SSR" },
-            { name: "フシギバナ風", icon: "🌸", type: "grass", hp: 140, atk: 85, rarity: "SSR" },
-            { name: "ミュウツー風", icon: "👽", type: "legendary", hp: 180, atk: 150, rarity: "UR" },
-            { name: "コイキング", icon: "🐟", type: "water", hp: 20, atk: 10, rarity: "N" }
+        const prefixes = ["サイバー", "ヴォイド", "ネオ", "クリスタル", "ダーク", "ルミナス", "プラズマ"];
+        const suffixes = ["・ビースト", "・ドロイド", "・ウィング", "・コア", "・レックス", "・アイ"];
+        const emojis = ["🐉", "🤖", "🦅", "☄️", "🐺", "👾", "🕸️", "🔋", "💎", "🔥"];
+        const rarities = [
+            { label: "N", weight: 60 },
+            { label: "R", weight: 30 },
+            { label: "SR", weight: 8 },
+            { label: "EX", weight: 2 }
         ];
 
-        const monsterBall = document.getElementById('monster-ball');
-        const cardDisplay = document.getElementById('card-display');
-        const messageArea = document.getElementById('message-area');
-        const collectionList = document.getElementById('collection-list');
-        const resetButton = document.getElementById('reset-button');
-        
-        let isDrawing = false; // ガチャ中かどうかのフラグ
+        function generateCard() {
+            const box = document.getElementById('gen-box');
+            const container = document.getElementById('card-container');
+            
+            if (box.classList.contains('scanning')) return;
 
-        monsterBall.addEventListener('click', drawMonster);
+            box.classList.add('scanning');
+            container.style.display = 'none';
 
-        function drawMonster() {
-            if (isDrawing) return;
-            isDrawing = true;
-
-            // 初期状態に戻す
-            cardDisplay.style.display = 'none';
-            cardDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
-            monsterBall.classList.remove('open');
-            monsterBall.style.background = 'linear-gradient(to bottom, var(--red-top) 50%, var(--white-bottom) 50%)'; // ボールを閉じる色に戻す
-            monsterBall.style.filter = 'none'; // 光を消す
-
-            // ボールを揺らすアニメーション
-            monsterBall.classList.add('shake');
-            messageArea.innerText = "モンスターボールが揺れている...";
-
+            // 生成シミュレーション（1.5秒）
             setTimeout(() => {
-                monsterBall.classList.remove('shake');
+                box.classList.remove('scanning');
                 
-                // 確率に基づいてモンスターを抽選
-                const rand = Math.random() * 100;
-                let pickedMonster;
+                // 抽選処理
+                const rarity = getRarity();
+                const name = prefixes[Math.floor(Math.random()*prefixes.length)] + suffixes[Math.floor(Math.random()*suffixes.length)];
+                const emoji = emojis[Math.floor(Math.random()*emojis.length)];
+                const hp = Math.floor(Math.random() * 100) + (rarity === 'EX' ? 150 : 50);
+                const atk = Math.floor(Math.random() * 50) + (rarity === 'EX' ? 80 : 10);
 
-                if (rand < 2) { // UR (2%)
-                    pickedMonster = monsterPool.find(m => m.rarity === "UR");
-                } else if (rand < 10) { // SSR (8%)
-                    const ssrMonsters = monsterPool.filter(m => m.rarity === "SSR");
-                    pickedMonster = ssrMonsters[Math.floor(Math.random() * ssrMonsters.length)];
-                } else if (rand < 35) { // SR (25%)
-                    const srMonsters = monsterPool.filter(m => m.rarity === "SR");
-                    pickedMonster = srMonsters[Math.floor(Math.random() * srMonsters.length)];
-                } else { // R, N (65%)
-                    const rMonsters = monsterPool.filter(m => m.rarity === "R" || m.rarity === "N");
-                    pickedMonster = rMonsters[Math.floor(Math.random() * rMonsters.length)];
-                }
-
-                // カード情報を更新
-                document.getElementById('card-name').innerText = pickedMonster.name;
-                document.getElementById('card-icon').innerText = pickedMonster.icon;
-                document.getElementById('card-hp').innerText = `HP ${pickedMonster.hp}`;
-                document.getElementById('card-atk').innerText = `ATK ${pickedMonster.atk}`;
+                // HTML構築
+                container.innerHTML = `
+                    <div class="card rank-${rarity}">
+                        <div class="rarity-badge">${rarity}</div>
+                        <div class="card-img-area">${emoji}</div>
+                        <div class="card-name">${name}</div>
+                        <div class="card-stats">
+                            <span>HP ${hp}</span>
+                            <span>ATK ${atk}</span>
+                        </div>
+                    </div>
+                `;
+                container.style.display = 'block';
                 
-                // タイプに応じてクラスを付与
-                document.getElementById('card-type').innerText = pickedMonster.type.toUpperCase();
-                document.getElementById('card-type').className = `card-type type-${pickedMonster.type}`;
-                
-                // カードのレアリティに応じて枠の色を変える
-                cardDisplay.className = 'card-display'; // いったんリセット
-                if (pickedMonster.type === 'legendary') {
-                    cardDisplay.classList.add('type-legendary');
-                } else {
-                    cardDisplay.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue(`--card-${pickedMonster.type}`);
-                }
-
-                // ボールが開くアニメーション
-                monsterBall.classList.add('open');
-                monsterBall.style.filter = 'drop-shadow(0 0 20px #e0e0e0)'; // 開くときに光る
-                messageArea.innerText = "GETだぜ！";
-
-                // カードをポップアップ表示
-                cardDisplay.style.display = 'flex';
-
-                // 履歴に追加
-                addCollectionItem(pickedMonster);
-
-                // 2秒後にリセット
-                setTimeout(() => {
-                    isDrawing = false;
-                    messageArea.innerText = "タップでモンスターボールを開け！";
-                }, 2000);
-
-            }, 800); // ボールが揺れる時間
+                addHistory(name, emoji, rarity);
+            }, 1500);
         }
 
-        function addCollectionItem(monster) {
-            // 初期メッセージを消す
-            if (collectionList.querySelector('p')) {
-                collectionList.innerHTML = '';
+        function getRarity() {
+            let rand = Math.random() * 100;
+            let current = 0;
+            for (let r of rarities) {
+                current += r.weight;
+                if (rand <= current) return r.label;
             }
+            return "N";
+        }
 
+        function addHistory(name, emoji, rarity) {
+            const grid = document.getElementById('history-grid');
             const item = document.createElement('div');
-            item.className = 'collection-item';
+            item.className = 'mini-card';
+            if(rarity === 'EX') item.style.borderColor = 'var(--neon-pink)';
             item.innerHTML = `
-                <span class="icon">${monster.icon}</span>
-                <span class="name">${monster.name}</span>
-                <span class="hp">HP ${monster.hp}</span>
-                <span class="type card-type type-${monster.type}">${monster.type.toUpperCase()}</span>
+                <div style="font-size:1.5rem">${emoji}</div>
+                <div>${rarity}</div>
             `;
-            collectionList.prepend(item);
+            grid.prepend(item);
         }
 
-        function resetGame() {
-            if (confirm("コレクションをリセットしますか？")) {
-                collectionList.innerHTML = '<p style="text-align: center; color: #888; font-size: 0.9rem;">まだ誰もゲットしていない...</p>';
-                messageArea.innerText = "タップでモンスターボールを開け！";
-                // カード表示をリセット
-                cardDisplay.style.display = 'none';
-                cardDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
-                monsterBall.classList.remove('open');
-                monsterBall.style.background = 'linear-gradient(to bottom, var(--red-top) 50%, var(--white-bottom) 50%)';
-                monsterBall.style.filter = 'none';
-                isDrawing = false;
-            }
+        function clearLogs() {
+            document.getElementById('history-grid').innerHTML = '';
         }
     </script>
 </body>
