@@ -3,278 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEO-GENESIS: Card Generator</title>
+    <title>PIECE FIELD - 海賊王への航路</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
-
         :root {
-            --bg-dark: #0a0e14;
-            --neon-blue: #00f2ff;
-            --neon-pink: #ff00ea;
-            --card-base: #1c252d;
+            --p1-color: #ff4d4d;
+            --p2-color: #4d94ff;
+            --wood: #3e2723;
         }
 
         body {
-            background-color: var(--bg-dark);
+            background: #1a1a1a;
             color: #fff;
-            font-family: 'Noto Sans JP', sans-serif;
+            font-family: 'Hiragino Mincho ProN', 'serif';
             display: flex;
             flex-direction: column;
             align-items: center;
             margin: 0;
-            padding: 20px;
-            min-height: 100vh;
+            height: 100vh;
         }
 
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            letter-spacing: 5px;
-            text-shadow: 0 0 10px var(--neon-blue);
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            font-size: 0.8rem;
-            color: var(--neon-blue);
-            margin-bottom: 30px;
-        }
-
-        /* 生成装置の演出 */
-        .generator-box {
-            position: relative;
-            width: 200px;
-            height: 200px;
-            border: 3px solid var(--neon-blue);
-            border-radius: 50%;
+        #game-screen {
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            border: 4px solid var(--wood);
             display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
-            margin-bottom: 40px;
+            flex-direction: column;
+            background: url('https://www.transparenttextures.com/patterns/old-map.png'), #d4b483;
+            color: #2b1d0e;
         }
 
-        .generator-box:hover {
-            box-shadow: 0 0 40px var(--neon-blue);
-            transform: scale(1.05);
+        /* プレイヤー情報 */
+        .player-info {
+            padding: 10px;
+            background: rgba(62, 39, 35, 0.9);
+            color: #fff;
+            text-align: center;
         }
 
-        .generator-box::before {
-            content: "GENERATE";
-            font-family: 'Orbitron', sans-serif;
+        .active { border: 4px solid #ffd700; box-shadow: 0 0 15px #ffd700; }
+
+        .hp-val { font-size: 1.5rem; font-weight: bold; color: #ffeb3b; }
+
+        /* ログ */
+        #log {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
             font-weight: bold;
-            color: var(--neon-blue);
+            background: rgba(255, 255, 255, 0.2);
+            border-top: 2px solid var(--wood);
+            border-bottom: 2px solid var(--wood);
         }
 
-        .scanning {
-            animation: scan 1.5s infinite linear;
-        }
-
-        @keyframes scan {
-            0% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 1; border-color: var(--neon-pink); }
-            100% { transform: scale(1); opacity: 0.5; }
-        }
-
-        /* カードデザイン */
-        #card-container {
-            perspective: 1000px;
-            height: 350px;
-            display: none;
+        /* 手札 */
+        .hand-container {
+            padding: 15px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            min-height: 110px;
         }
 
         .card {
-            width: 240px;
-            height: 340px;
-            background: var(--card-base);
-            border-radius: 15px;
-            border: 2px solid #444;
-            padding: 15px;
-            position: relative;
+            width: 70px;
+            height: 90px;
+            background: #fff;
+            border: 2px solid #000;
+            border-radius: 5px;
+            cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
-            animation: flipIn 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        }
-
-        @keyframes flipIn {
-            0% { transform: rotateY(90deg) scale(0.5); opacity: 0; }
-            100% { transform: rotateY(0deg) scale(1); opacity: 1; }
-        }
-
-        .rarity-badge {
-            position: absolute;
-            top: 10px; right: 10px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: bold;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-
-        .card-img-area {
-            width: 100%;
-            height: 160px;
-            background: #000;
-            border-radius: 10px;
-            display: flex;
             justify-content: center;
-            align-items: center;
-            font-size: 5rem;
-            margin: 10px 0;
-            border: 1px solid #333;
-        }
-
-        .card-name {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin: 5px 0;
-            color: #fff;
-        }
-
-        .card-stats {
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-            background: rgba(255,255,255,0.05);
-            padding: 10px 0;
-            border-radius: 8px;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-        }
-
-        /* レアリティ効果 */
-        .rank-EX { border: 3px solid var(--neon-pink); box-shadow: 0 0 30px var(--neon-pink); }
-        .rank-EX .rarity-badge { background: var(--neon-pink); color: #fff; }
-        
-        /* 履歴 */
-        .history {
-            margin-top: 50px;
-            width: 100%;
-            max-width: 500px;
-        }
-
-        .history-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .mini-card {
-            background: #1c252d;
-            border-radius: 5px;
-            padding: 5px;
-            text-align: center;
             font-size: 0.7rem;
-            border: 1px solid #333;
+            text-align: center;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            transition: 0.2s;
         }
 
-        button {
-            margin-top: 20px;
-            background: none;
-            border: 1px solid var(--neon-blue);
-            color: var(--neon-blue);
-            padding: 8px 16px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
+        .card:hover { transform: translateY(-10px); }
+        .card.atk { background: #ffebee; border-color: #c62828; }
+        .card.def { background: #e8f5e9; border-color: #2e7d32; }
+        .card.heal { background: #fff3e0; border-color: #ef6c00; }
+
+        .card-icon { font-size: 1.5rem; margin-bottom: 5px; }
+
+        /* オーバーレイ */
+        #result {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            color: #fff;
         }
     </style>
 </head>
 <body>
 
-    <h1>NEO-GENESIS</h1>
-    <div class="subtitle">CELLULAR SPECIMEN COLLECTOR</div>
-
-    <div class="generator-box" id="gen-box" onclick="generateCard()"></div>
-
-    <div id="card-container">
+    <div id="game-screen">
+        <div id="p2-area" class="player-info">
+            <div>後攻: 🏴‍☠️ 四皇チーム</div>
+            <div class="hp-val">฿ <span id="p2-hp">2000</span></div>
         </div>
 
-    <div class="history">
-        <div style="display:flex; justify-content: space-between; align-items: center;">
-            <span style="font-family:'Orbitron'">LOG: SPECIMENS</span>
-            <button onclick="clearLogs()">CLEAR</button>
+        <div id="log">冒険の始まりだ！野郎共、準備はいいか！</div>
+
+        <div id="p1-area" class="player-info active">
+            <div>先攻: 👒 麦わらチーム</div>
+            <div class="hp-val">฿ <span id="p1-hp">2000</span></div>
         </div>
-        <div class="history-grid" id="history-grid"></div>
+
+        <div class="hand-container" id="hand"></div>
     </div>
 
-    <script>
-        const prefixes = ["サイバー", "ヴォイド", "ネオ", "クリスタル", "ダーク", "ルミナス", "プラズマ"];
-        const suffixes = ["・ビースト", "・ドロイド", "・ウィング", "・コア", "・レックス", "・アイ"];
-        const emojis = ["🐉", "🤖", "🦅", "☄️", "🐺", "👾", "🕸️", "🔋", "💎", "🔥"];
-        const rarities = [
-            { label: "N", weight: 60 },
-            { label: "R", weight: 30 },
-            { label: "SR", weight: 8 },
-            { label: "EX", weight: 2 }
-        ];
+    <div id="result">
+        <h1 id="winner-msg"></h1>
+        <button onclick="location.reload()" style="padding:10px 20px; font-size:1rem; cursor:pointer;">再戦だぁ！</button>
+    </div>
 
-        function generateCard() {
-            const box = document.getElementById('gen-box');
-            const container = document.getElementById('card-container');
-            
-            if (box.classList.contains('scanning')) return;
+<script>
+    let p1Hp = 2000;
+    let p2Hp = 2000;
+    let turn = 1; // 1 or 2
+    let hands = { 1: [], 2: [] };
 
-            box.classList.add('scanning');
-            container.style.display = 'none';
+    const cardPool = [
+        { name: "ゴムゴムの銃", icon: "👊", type: "atk", val: 500 },
+        { name: "三刀流・鬼斬り", icon: "⚔️", type: "atk", val: 700 },
+        { name: "火拳", icon: "🔥", type: "atk", val: 900 },
+        { name: "鉄壁の盾", icon: "🛡️", type: "def", val: 500 },
+        { name: "覇気ガード", icon: "✨", type: "def", val: 1000 },
+        { name: "骨付き肉", icon: "🍖", type: "heal", val: 400 },
+        { name: "医者の薬", icon: "💊", type: "heal", val: 600 }
+    ];
 
-            // 生成シミュレーション（1.5秒）
-            setTimeout(() => {
-                box.classList.remove('scanning');
-                
-                // 抽選処理
-                const rarity = getRarity();
-                const name = prefixes[Math.floor(Math.random()*prefixes.length)] + suffixes[Math.floor(Math.random()*suffixes.length)];
-                const emoji = emojis[Math.floor(Math.random()*emojis.length)];
-                const hp = Math.floor(Math.random() * 100) + (rarity === 'EX' ? 150 : 50);
-                const atk = Math.floor(Math.random() * 50) + (rarity === 'EX' ? 80 : 10);
-
-                // HTML構築
-                container.innerHTML = `
-                    <div class="card rank-${rarity}">
-                        <div class="rarity-badge">${rarity}</div>
-                        <div class="card-img-area">${emoji}</div>
-                        <div class="card-name">${name}</div>
-                        <div class="card-stats">
-                            <span>HP ${hp}</span>
-                            <span>ATK ${atk}</span>
-                        </div>
-                    </div>
-                `;
-                container.style.display = 'block';
-                
-                addHistory(name, emoji, rarity);
-            }, 1500);
+    function init() {
+        for(let i=0; i<4; i++) {
+            hands[1].push(drawCard());
+            hands[2].push(drawCard());
         }
+        updateUI();
+    }
 
-        function getRarity() {
-            let rand = Math.random() * 100;
-            let current = 0;
-            for (let r of rarities) {
-                current += r.weight;
-                if (rand <= current) return r.label;
+    function drawCard() {
+        return cardPool[Math.floor(Math.random() * cardPool.length)];
+    }
+
+    function updateUI() {
+        document.getElementById('p1-hp').innerText = p1Hp;
+        document.getElementById('p2-hp').innerText = p2Hp;
+        
+        const handEl = document.getElementById('hand');
+        handEl.innerHTML = '';
+        
+        hands[turn].forEach((card, idx) => {
+            const div = document.createElement('div');
+            div.className = `card ${card.type}`;
+            div.innerHTML = `<div class="card-icon">${card.icon}</div><div>${card.name}</div><div style="font-size:0.5rem">値:${card.val}</div>`;
+            div.onclick = () => playCard(idx);
+            handEl.appendChild(div);
+        });
+
+        document.getElementById('p1-area').className = turn === 1 ? 'player-info active' : 'player-info';
+        document.getElementById('p2-area').className = turn === 2 ? 'player-info active' : 'player-info';
+
+        if(p1Hp <= 0) showResult("四皇チームの勝利！海賊王に一歩近づいた！");
+        if(p2Hp <= 0) showResult("麦わらチームの勝利！宴だぁ〜〜！！");
+    }
+
+    function playCard(idx) {
+        const card = hands[turn][idx];
+        const target = turn === 1 ? 2 : 1;
+        const log = document.getElementById('log');
+
+        if(card.type === 'atk') {
+            addLog(`P${turn}の ${card.name}！`, "#c62828");
+            // 簡易防御判定（相手の手札に防御があれば自動使用）
+            const defIdx = hands[target].findIndex(c => c.type === 'def');
+            if(defIdx !== -1) {
+                const defCard = hands[target][defIdx];
+                const damage = Math.max(0, card.val - defCard.val);
+                addLog(`相手は ${defCard.name} で防いだ！`, "#2e7d32");
+                applyDamage(target, damage);
+                hands[target].splice(defIdx, 1);
+                hands[target].push(drawCard());
+            } else {
+                applyDamage(target, card.val);
             }
-            return "N";
+        } else if(card.type === 'heal') {
+            addLog(`P${turn}は ${card.name} を食べた！`, "#ef6c00");
+            if(turn === 1) p1Hp += card.val; else p2Hp += card.val;
+        } else {
+            addLog(`P${turn}は防御を捨てて手札を入れ替えた！`);
         }
 
-        function addHistory(name, emoji, rarity) {
-            const grid = document.getElementById('history-grid');
-            const item = document.createElement('div');
-            item.className = 'mini-card';
-            if(rarity === 'EX') item.style.borderColor = 'var(--neon-pink)';
-            item.innerHTML = `
-                <div style="font-size:1.5rem">${emoji}</div>
-                <div>${rarity}</div>
-            `;
-            grid.prepend(item);
-        }
+        hands[turn].splice(idx, 1);
+        hands[turn].push(drawCard());
+        
+        turn = (turn === 1) ? 2 : 1;
+        updateUI();
+    }
 
-        function clearLogs() {
-            document.getElementById('history-grid').innerHTML = '';
-        }
-    </script>
+    function applyDamage(t, d) {
+        if(t === 1) p1Hp -= d; else p2Hp -= d;
+        addLog(`${d} のダメージを与えた！`);
+    }
+
+    function addLog(msg, color="#2b1d0e") {
+        const log = document.getElementById('log');
+        log.innerHTML = `<div style="color:${color}">${msg}</div>` + log.innerHTML;
+    }
+
+    function showResult(msg) {
+        document.getElementById('result').style.display = 'flex';
+        document.getElementById('winner-msg').innerText = msg;
+    }
+
+    init();
+</script>
 </body>
 </html>
