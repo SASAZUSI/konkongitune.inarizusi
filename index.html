@@ -1,7 +1,235 @@
-グラスノスチ
-たまごっち開けたら天津飯
-ラクダのコブはらくだった
-ジャムおじさんがジャムを持参する
-ばたこさんの球早すぎてバッター降参
-ホラー、マントつけないとホラーマンたべるマーラータン
-夜（”ナイト”）には明かり「”ライト”」をつけ”ないと”
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プレミアムガチャ - Simulator</title>
+    <style>
+        :root {
+            --ssr-color: #ffd700;
+            --sr-color: #c0c0c0;
+            --r-color: #4facfe;
+            --bg-dark: #1a1a2e;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            margin-bottom: 30px;
+        }
+
+        /* ガチャ演出エリア */
+        .gacha-display {
+            height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            width: 140px;
+            height: 200px;
+            background: linear-gradient(135deg, #333, #111);
+            border-radius: 10px;
+            border: 2px solid #555;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .card.ssr { border-color: var(--ssr-color); box-shadow: 0 0 25px var(--ssr-color); }
+        .card.sr { border-color: var(--sr-color); box-shadow: 0 0 15px var(--sr-color); }
+        .card.r { border-color: var(--r-color); box-shadow: 0 0 10px var(--r-color); }
+
+        .rarity-label {
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        /* ボタン */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #000;
+            background: #fff;
+        }
+
+        button:active { transform: scale(0.95); }
+        button:disabled { background: #555; cursor: not-allowed; }
+
+        .btn-gacha {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        /* 履歴リスト */
+        .history {
+            margin-top: 40px;
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+        }
+
+        .ssr-text { color: var(--ssr-color); font-weight: bold; }
+        .sr-text { color: var(--sr-color); font-weight: bold; }
+        .r-text { color: var(--r-color); }
+
+        /* アニメーション */
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+        .anim-gacha { animation: bounce 0.4s ease; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>LEGEND GACHA</h1>
+
+    <div class="gacha-display" id="display">
+        <div class="card" id="card">
+            <div id="rarity-text" class="rarity-label">？</div>
+            <div id="character-name">TAP START</div>
+        </div>
+    </div>
+
+    <div class="button-group">
+        <button class="btn-gacha" id="draw-btn" onclick="drawGacha()">ガチャを引く！</button>
+        <button onclick="resetHistory()">履歴クリア</button>
+    </div>
+
+    <div class="history" id="history-list">
+        <div style="color: #888;">履歴がここに表示されます</div>
+    </div>
+</div>
+
+<script>
+    const characterData = {
+        SSR: ["[黄金] 勇者アルフレッド", "[深淵] 魔王ルシフェル", "[聖女] セシリア"],
+        SR: ["騎士団長カイン", "賢者マギ", "暗殺者シノビ", "弓兵ロビン"],
+        R: ["村人A", "新米兵士", "見習い魔法使い", "スライム", "ゴブリン"]
+    };
+
+    const cardElement = document.getElementById('card');
+    const rarityText = document.getElementById('rarity-text');
+    const charNameText = document.getElementById('character-name');
+    const historyList = document.getElementById('history-list');
+    const drawBtn = document.getElementById('draw-btn');
+
+    function drawGacha() {
+        // ボタンを一時無効化
+        drawBtn.disabled = true;
+        
+        // 演出用のアニメーションリセット
+        cardElement.className = 'card';
+        cardElement.style.transform = 'rotateY(180deg)';
+        
+        setTimeout(() => {
+            const rand = Math.random() * 100;
+            let rarity, resultChar, colorClass;
+
+            // 確率判定
+            if (rand < 3) { // 3%
+                rarity = "SSR";
+                colorClass = "ssr";
+            } else if (rand < 20) { // 17%
+                rarity = "SR";
+                colorClass = "sr";
+            } else { // 80%
+                rarity = "R";
+                colorClass = "r";
+            }
+
+            // キャラクター抽選
+            const charList = characterData[rarity];
+            resultChar = charList[Math.floor(Math.random() * charList.length)];
+
+            // 表示更新
+            cardElement.className = `card ${colorClass} anim-gacha`;
+            cardElement.style.transform = 'rotateY(0deg)';
+            rarityText.innerText = rarity;
+            charNameText.innerText = resultChar;
+
+            // 履歴に追加
+            addHistory(rarity, resultChar, colorClass);
+            
+            drawBtn.disabled = false;
+        }, 300);
+    }
+
+    function addHistory(rarity, name, colorClass) {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        
+        // 履歴の最初の文字を消去
+        if (historyList.children[0].style.color === 'rgb(136, 136, 136)') {
+            historyList.innerHTML = '';
+        }
+
+        item.innerHTML = `
+            <span class="${colorClass}-text">[${rarity}]</span>
+            <span>${name}</span>
+        `;
+        historyList.prepend(item);
+    }
+
+    function resetHistory() {
+        if(confirm("履歴をリセットしますか？")) {
+            historyList.innerHTML = '<div style="color: #888;">履歴がここに表示されます</div>';
+            rarityText.innerText = "？";
+            charNameText.innerText = "TAP START";
+            cardElement.className = 'card';
+        }
+    }
+</script>
+
+</body>
+</html>
