@@ -3,233 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>プレミアムガチャ - Simulator</title>
+    <title>MONSTER GET GACHA - モンスターゲットガチャ</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@400;700&display=swap');
+
         :root {
-            --ssr-color: #ffd700;
-            --sr-color: #c0c0c0;
-            --r-color: #4facfe;
-            --bg-dark: #1a1a2e;
+            --red-top: #ff0000;
+            --white-bottom: #f0f0f0;
+            --black-line: #222222;
+            --bg-color: #2c3e50;
+            --card-fire: #e74c3c;
+            --card-water: #3498db;
+            --card-grass: #2ecc71;
+            --card-electric: #f1c40f;
+            --card-normal: #bdc3c7;
         }
 
         body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: white;
+            background-color: var(--bg-color);
+            color: #ecf0f1;
+            font-family: 'Noto Sans JP', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
+            padding: 20px;
             min-height: 100vh;
-        }
-
-        .container {
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-            padding-top: 50px;
+            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         h1 {
-            font-size: 2rem;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.8rem;
+            text-shadow: 4px 4px 0px #1a252f;
             margin-bottom: 30px;
+            text-align: center;
         }
 
-        /* ガチャ演出エリア */
-        .gacha-display {
-            height: 250px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            perspective: 1000px;
-            margin-bottom: 40px;
-        }
-
-        .card {
-            width: 140px;
-            height: 200px;
-            background: linear-gradient(135deg, #333, #111);
-            border-radius: 10px;
-            border: 2px solid #555;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-        }
-
-        .card.ssr { border-color: var(--ssr-color); box-shadow: 0 0 25px var(--ssr-color); }
-        .card.sr { border-color: var(--sr-color); box-shadow: 0 0 15px var(--sr-color); }
-        .card.r { border-color: var(--r-color); box-shadow: 0 0 10px var(--r-color); }
-
-        .rarity-label {
-            font-weight: bold;
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-
-        /* ボタン */
-        .button-group {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-
-        button {
-            padding: 12px 25px;
-            font-size: 1rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 50px;
+        /* モンスターボール */
+        .monster-ball-container {
+            width: 150px;
+            height: 150px;
+            position: relative;
             cursor: pointer;
-            transition: 0.2s;
-            color: #000;
-            background: #fff;
+            margin-bottom: 30px;
+            perspective: 1000px;
         }
 
-        button:active { transform: scale(0.95); }
-        button:disabled { background: #555; cursor: not-allowed; }
-
-        .btn-gacha {
-            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
-        /* 履歴リスト */
-        .history {
-            margin-top: 40px;
+        .monster-ball {
             width: 100%;
-            background: rgba(255,255,255,0.05);
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 8px solid var(--black-line);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            transition: transform 0.3s ease-out;
+            background: linear-gradient(to bottom, var(--red-top) 50%, var(--white-bottom) 50%);
+        }
+
+        .monster-ball.shake { animation: ballShake 0.5s ease-in-out; }
+        .monster-ball.open { 
+            animation: ballOpen 0.8s forwards;
+            background: var(--bg-color); /* 開くとき背景と同化 */
+        }
+
+        @keyframes ballShake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-5px, -5px) rotate(-5deg); }
+            75% { transform: translate(5px, 5px) rotate(5deg); }
+        }
+
+        @keyframes ballOpen {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            50% { transform: translateY(-50px) scale(1.2); opacity: 0; } /* ボールが飛び去る */
+            100% { transform: translateY(-100px) scale(0); opacity: 0; }
+        }
+
+        .ball-button {
+            width: 40px;
+            height: 40px;
+            background-color: var(--white-bottom);
+            border: 5px solid var(--black-line);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 出てくるカード */
+        .card-display {
+            width: 200px;
+            height: 280px;
+            background-color: #f8f8f8;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0); /* 最初は隠す */
+            display: none; /* JSでflexにする */
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            padding: 10px;
+            border: 4px solid #aaa;
+            box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive;
+            animation: cardPopUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation-delay: 0.5s; /* ボールが開いた後に表示 */
+            z-index: 5; /* ボールより手前に */
+        }
+        
+        @keyframes cardPopUp {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .card-title { font-size: 0.9rem; color: var(--black-line); text-align: center; margin-bottom: 5px; }
+        .card-image {
+            width: 100px; height: 100px; background-color: #eee;
+            border: 2px solid var(--black-line); border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; margin-bottom: 10px;
+        }
+        .card-stats {
+            display: flex; justify-content: space-around; width: 100%;
+            font-size: 0.7rem; color: var(--black-line); margin-top: 5px;
+        }
+        .card-type {
+            padding: 3px 8px; border-radius: 10px;
+            color: white; font-size: 0.6rem; margin-top: 5px;
+        }
+
+        /* タイプ別カラー */
+        .type-fire { background-color: var(--card-fire); }
+        .type-water { background-color: var(--card-water); }
+        .type-grass { background-color: var(--card-grass); }
+        .type-electric { background-color: var(--card-electric); color: #333; }
+        .type-normal { background-color: var(--card-normal); color: #333; }
+        .type-legendary { 
+            background: linear-gradient(45deg, #ff00ea, #00fffb);
+            box-shadow: 0 0 15px #ff00ea, 0 0 15px #00fffb;
+            font-weight: bold;
+        }
+        
+        .card-display.type-legendary {
+            border-color: #ff00ea;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 40px #ff00ea;
+        }
+
+
+        /* 引いたカードの履歴 */
+        #collection-list {
+            margin-top: 40px;
+            width: 90%;
+            max-width: 400px;
+            background: rgba(0,0,0,0.2);
             border-radius: 10px;
             padding: 15px;
-            max-height: 300px;
+            max-height: 250px;
             overflow-y: auto;
         }
 
-        .history-item {
+        .collection-item {
             display: flex;
-            justify-content: space-between;
+            align-items: center;
             padding: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.9rem;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+            font-size: 0.8rem;
+            color: #ccc;
         }
 
-        .ssr-text { color: var(--ssr-color); font-weight: bold; }
-        .sr-text { color: var(--sr-color); font-weight: bold; }
-        .r-text { color: var(--r-color); }
+        .collection-item:last-child { border-bottom: none; }
+        .collection-item .icon { font-size: 1.5rem; margin-right: 10px; }
+        .collection-item .name { font-weight: bold; }
+        .collection-item .type { margin-left: auto; }
+        .collection-item .hp { margin-left: 15px; }
 
-        /* アニメーション */
-        @keyframes bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1) rotate(5deg); }
+        .message-area {
+            color: #eee;
+            margin-top: 20px;
+            font-size: 1rem;
+            min-height: 20px;
         }
-        .anim-gacha { animation: bounce 0.4s ease; }
+
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #c0392b; }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
 
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>LEGEND GACHA</h1>
+    <h1>MONSTER GET GACHA</h1>
 
-    <div class="gacha-display" id="display">
-        <div class="card" id="card">
-            <div id="rarity-text" class="rarity-label">？</div>
-            <div id="character-name">TAP START</div>
+    <div class="monster-ball-container" id="ball-container">
+        <div class="monster-ball" id="monster-ball">
+            <div class="ball-button"></div>
+        </div>
+        <div class="card-display" id="card-display">
+            <div class="card-title" id="card-name">? ? ?</div>
+            <div class="card-image" id="card-icon">❓</div>
+            <div class="card-stats">
+                <span id="card-hp">HP ???</span>
+                <span id="card-atk">ATK ???</span>
+            </div>
+            <div class="card-type" id="card-type">TYPE</div>
         </div>
     </div>
 
-    <div class="button-group">
-        <button class="btn-gacha" id="draw-btn" onclick="drawGacha()">ガチャを引く！</button>
-        <button onclick="resetHistory()">履歴クリア</button>
+    <div class="message-area" id="message-area">タップでモンスターボールを開け！</div>
+
+    <button id="reset-button" onclick="resetGame()">履歴をリセット</button>
+
+    <h2>ゲットしたモンスター</h2>
+    <div id="collection-list">
+        <p style="text-align: center; color: #888; font-size: 0.9rem;">まだ誰もゲットしていない...</p>
     </div>
 
-    <div class="history" id="history-list">
-        <div style="color: #888;">履歴がここに表示されます</div>
-    </div>
-</div>
+    <script>
+        const monsterPool = [
+            { name: "ピカチュウ風", icon: "⚡", type: "electric", hp: 60, atk: 50, rarity: "SR" },
+            { name: "ヒトカゲ風", icon: "🔥", type: "fire", hp: 50, atk: 55, rarity: "R" },
+            { name: "ゼニガメ風", icon: "💧", type: "water", hp: 55, atk: 50, rarity: "R" },
+            { name: "フシギダネ風", icon: "🌿", type: "grass", hp: 65, atk: 45, rarity: "R" },
+            { name: "リザードン風", icon: "🐉", type: "fire", hp: 120, atk: 100, rarity: "SSR" },
+            { name: "カメックス風", icon: "🐢", type: "water", hp: 130, atk: 90, rarity: "SSR" },
+            { name: "フシギバナ風", icon: "🌸", type: "grass", hp: 140, atk: 85, rarity: "SSR" },
+            { name: "ミュウツー風", icon: "👽", type: "legendary", hp: 180, atk: 150, rarity: "UR" },
+            { name: "コイキング", icon: "🐟", type: "water", hp: 20, atk: 10, rarity: "N" }
+        ];
 
-<script>
-    const characterData = {
-        SSR: ["[黄金] 勇者アルフレッド", "[深淵] 魔王ルシフェル", "[聖女] セシリア"],
-        SR: ["騎士団長カイン", "賢者マギ", "暗殺者シノビ", "弓兵ロビン"],
-        R: ["村人A", "新米兵士", "見習い魔法使い", "スライム", "ゴブリン"]
-    };
-
-    const cardElement = document.getElementById('card');
-    const rarityText = document.getElementById('rarity-text');
-    const charNameText = document.getElementById('character-name');
-    const historyList = document.getElementById('history-list');
-    const drawBtn = document.getElementById('draw-btn');
-
-    function drawGacha() {
-        // ボタンを一時無効化
-        drawBtn.disabled = true;
+        const monsterBall = document.getElementById('monster-ball');
+        const cardDisplay = document.getElementById('card-display');
+        const messageArea = document.getElementById('message-area');
+        const collectionList = document.getElementById('collection-list');
+        const resetButton = document.getElementById('reset-button');
         
-        // 演出用のアニメーションリセット
-        cardElement.className = 'card';
-        cardElement.style.transform = 'rotateY(180deg)';
-        
-        setTimeout(() => {
-            const rand = Math.random() * 100;
-            let rarity, resultChar, colorClass;
+        let isDrawing = false; // ガチャ中かどうかのフラグ
 
-            // 確率判定
-            if (rand < 3) { // 3%
-                rarity = "SSR";
-                colorClass = "ssr";
-            } else if (rand < 20) { // 17%
-                rarity = "SR";
-                colorClass = "sr";
-            } else { // 80%
-                rarity = "R";
-                colorClass = "r";
+        monsterBall.addEventListener('click', drawMonster);
+
+        function drawMonster() {
+            if (isDrawing) return;
+            isDrawing = true;
+
+            // 初期状態に戻す
+            cardDisplay.style.display = 'none';
+            cardDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
+            monsterBall.classList.remove('open');
+            monsterBall.style.background = 'linear-gradient(to bottom, var(--red-top) 50%, var(--white-bottom) 50%)'; // ボールを閉じる色に戻す
+            monsterBall.style.filter = 'none'; // 光を消す
+
+            // ボールを揺らすアニメーション
+            monsterBall.classList.add('shake');
+            messageArea.innerText = "モンスターボールが揺れている...";
+
+            setTimeout(() => {
+                monsterBall.classList.remove('shake');
+                
+                // 確率に基づいてモンスターを抽選
+                const rand = Math.random() * 100;
+                let pickedMonster;
+
+                if (rand < 2) { // UR (2%)
+                    pickedMonster = monsterPool.find(m => m.rarity === "UR");
+                } else if (rand < 10) { // SSR (8%)
+                    const ssrMonsters = monsterPool.filter(m => m.rarity === "SSR");
+                    pickedMonster = ssrMonsters[Math.floor(Math.random() * ssrMonsters.length)];
+                } else if (rand < 35) { // SR (25%)
+                    const srMonsters = monsterPool.filter(m => m.rarity === "SR");
+                    pickedMonster = srMonsters[Math.floor(Math.random() * srMonsters.length)];
+                } else { // R, N (65%)
+                    const rMonsters = monsterPool.filter(m => m.rarity === "R" || m.rarity === "N");
+                    pickedMonster = rMonsters[Math.floor(Math.random() * rMonsters.length)];
+                }
+
+                // カード情報を更新
+                document.getElementById('card-name').innerText = pickedMonster.name;
+                document.getElementById('card-icon').innerText = pickedMonster.icon;
+                document.getElementById('card-hp').innerText = `HP ${pickedMonster.hp}`;
+                document.getElementById('card-atk').innerText = `ATK ${pickedMonster.atk}`;
+                
+                // タイプに応じてクラスを付与
+                document.getElementById('card-type').innerText = pickedMonster.type.toUpperCase();
+                document.getElementById('card-type').className = `card-type type-${pickedMonster.type}`;
+                
+                // カードのレアリティに応じて枠の色を変える
+                cardDisplay.className = 'card-display'; // いったんリセット
+                if (pickedMonster.type === 'legendary') {
+                    cardDisplay.classList.add('type-legendary');
+                } else {
+                    cardDisplay.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue(`--card-${pickedMonster.type}`);
+                }
+
+                // ボールが開くアニメーション
+                monsterBall.classList.add('open');
+                monsterBall.style.filter = 'drop-shadow(0 0 20px #e0e0e0)'; // 開くときに光る
+                messageArea.innerText = "GETだぜ！";
+
+                // カードをポップアップ表示
+                cardDisplay.style.display = 'flex';
+
+                // 履歴に追加
+                addCollectionItem(pickedMonster);
+
+                // 2秒後にリセット
+                setTimeout(() => {
+                    isDrawing = false;
+                    messageArea.innerText = "タップでモンスターボールを開け！";
+                }, 2000);
+
+            }, 800); // ボールが揺れる時間
+        }
+
+        function addCollectionItem(monster) {
+            // 初期メッセージを消す
+            if (collectionList.querySelector('p')) {
+                collectionList.innerHTML = '';
             }
 
-            // キャラクター抽選
-            const charList = characterData[rarity];
-            resultChar = charList[Math.floor(Math.random() * charList.length)];
-
-            // 表示更新
-            cardElement.className = `card ${colorClass} anim-gacha`;
-            cardElement.style.transform = 'rotateY(0deg)';
-            rarityText.innerText = rarity;
-            charNameText.innerText = resultChar;
-
-            // 履歴に追加
-            addHistory(rarity, resultChar, colorClass);
-            
-            drawBtn.disabled = false;
-        }, 300);
-    }
-
-    function addHistory(rarity, name, colorClass) {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        
-        // 履歴の最初の文字を消去
-        if (historyList.children[0].style.color === 'rgb(136, 136, 136)') {
-            historyList.innerHTML = '';
+            const item = document.createElement('div');
+            item.className = 'collection-item';
+            item.innerHTML = `
+                <span class="icon">${monster.icon}</span>
+                <span class="name">${monster.name}</span>
+                <span class="hp">HP ${monster.hp}</span>
+                <span class="type card-type type-${monster.type}">${monster.type.toUpperCase()}</span>
+            `;
+            collectionList.prepend(item);
         }
 
-        item.innerHTML = `
-            <span class="${colorClass}-text">[${rarity}]</span>
-            <span>${name}</span>
-        `;
-        historyList.prepend(item);
-    }
-
-    function resetHistory() {
-        if(confirm("履歴をリセットしますか？")) {
-            historyList.innerHTML = '<div style="color: #888;">履歴がここに表示されます</div>';
-            rarityText.innerText = "？";
-            charNameText.innerText = "TAP START";
-            cardElement.className = 'card';
+        function resetGame() {
+            if (confirm("コレクションをリセットしますか？")) {
+                collectionList.innerHTML = '<p style="text-align: center; color: #888; font-size: 0.9rem;">まだ誰もゲットしていない...</p>';
+                messageArea.innerText = "タップでモンスターボールを開け！";
+                // カード表示をリセット
+                cardDisplay.style.display = 'none';
+                cardDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
+                monsterBall.classList.remove('open');
+                monsterBall.style.background = 'linear-gradient(to bottom, var(--red-top) 50%, var(--white-bottom) 50%)';
+                monsterBall.style.filter = 'none';
+                isDrawing = false;
+            }
         }
-    }
-</script>
-
+    </script>
 </body>
 </html>
